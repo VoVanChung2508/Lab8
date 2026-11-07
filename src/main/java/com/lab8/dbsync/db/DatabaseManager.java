@@ -219,6 +219,37 @@ public class DatabaseManager {
         return list;
     }
 
+    public synchronized void mergeStudents(List<Student> students) {
+        if (students == null || students.isEmpty()) return;
+        String sql = "INSERT INTO students (student_code, full_name, class_name, gpa, updated_at, version) " +
+                "VALUES (?, ?, ?, ?, ?, ?) " +
+                "ON CONFLICT(student_code) DO UPDATE SET " +
+                "full_name = excluded.full_name, " +
+                "class_name = excluded.class_name, " +
+                "gpa = excluded.gpa, " +
+                "updated_at = excluded.updated_at, " +
+                "version = CASE WHEN excluded.updated_at > students.updated_at THEN students.version + 1 ELSE students.version END " +
+                "WHERE excluded.updated_at >= students.updated_at;";
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            conn.setAutoCommit(false);
+            for (Student s : students) {
+                pstmt.setString(1, s.getStudentCode());
+                pstmt.setString(2, s.getFullName());
+                pstmt.setString(3, s.getClassName());
+                pstmt.setDouble(4, s.getGpa());
+                pstmt.setLong(5, s.getUpdatedAt());
+                pstmt.setInt(6, s.getVersion());
+                pstmt.addBatch();
+            }
+            pstmt.executeBatch();
+            conn.commit();
+        } catch (SQLException e) {
+            System.err.println("Lỗi hợp nhất (merge) danh sách sinh viên: " + e.getMessage());
+        }
+    }
+
     public synchronized void replaceAllStudents(List<Student> students) {
         String deleteSql = "DELETE FROM students";
         String insertSql = "INSERT INTO students (student_code, full_name, class_name, gpa, updated_at, version) VALUES (?, ?, ?, ?, ?, ?)";

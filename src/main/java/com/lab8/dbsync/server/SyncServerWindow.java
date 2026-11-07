@@ -114,24 +114,35 @@ public class SyncServerWindow extends JFrame {
         peersRow.setBackground(UITheme.getCardBackgroundColor());
         peersRow.setBorder(BorderFactory.createTitledBorder("🌐 Kết Nối 2 Server Đối Tác (Replication Peers)"));
 
+        // Xác định 2 Peer Server mặc định tùy theo Node ID hiện tại
+        String defP1Id = "Server-2", defP1Port = "1100";
+        String defP2Id = "Server-3", defP2Port = "1101";
+        if ("Server-2".equalsIgnoreCase(defaultNodeId)) {
+            defP1Id = "Server-1"; defP1Port = "1099";
+            defP2Id = "Server-3"; defP2Port = "1101";
+        } else if ("Server-3".equalsIgnoreCase(defaultNodeId)) {
+            defP1Id = "Server-1"; defP1Port = "1099";
+            defP2Id = "Server-2"; defP2Port = "1100";
+        }
+
         peersRow.add(new JLabel("Peer 1 ID:"));
-        peer1IdField = new JTextField("Server-2", 7);
+        peer1IdField = new JTextField(defP1Id, 7);
         peersRow.add(peer1IdField);
         peersRow.add(new JLabel("IP:"));
         peer1HostField = new JTextField("127.0.0.1", 10);
         peersRow.add(peer1HostField);
         peersRow.add(new JLabel("Port:"));
-        peer1PortField = new JTextField("1100", 5);
+        peer1PortField = new JTextField(defP1Port, 5);
         peersRow.add(peer1PortField);
 
         peersRow.add(new JLabel(" | Peer 2 ID:"));
-        peer2IdField = new JTextField("Server-3", 7);
+        peer2IdField = new JTextField(defP2Id, 7);
         peersRow.add(peer2IdField);
         peersRow.add(new JLabel("IP:"));
         peer2HostField = new JTextField("127.0.0.1", 10);
         peersRow.add(peer2HostField);
         peersRow.add(new JLabel("Port:"));
-        peer2PortField = new JTextField("1101", 5);
+        peer2PortField = new JTextField(defP2Port, 5);
         peersRow.add(peer2PortField);
 
         topContainer.add(selfConfigRow);

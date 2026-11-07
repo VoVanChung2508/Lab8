@@ -161,29 +161,33 @@ public class SyncNodeImpl extends UnicastRemoteObject implements SyncNodeInterfa
     @Override
     public synchronized void syncMissedFromPeers() throws RemoteException {
         log("🔄 Đang kiểm tra và bắt kịp dữ liệu từ các Peer Server...");
-        boolean synced = false;
+        int totalPeersContacted = 0;
+        int totalMerged = 0;
 
         for (NodeInfo peer : peers) {
             try {
                 SyncNodeInterface stub = getPeerStub(peer);
                 if (stub != null) {
                     List<Student> snapshot = stub.requestFullSnapshot();
-                    if (snapshot != null) {
-                        log("Nhận snapshot " + snapshot.size() + " bản ghi từ " + peer.getNodeId() + ". Đang áp dụng...");
-                        db.replaceAllStudents(snapshot);
-                        notifyDataChanged();
-                        synced = true;
-                        log("✅ Đồng bộ bắt kịp thành công từ " + peer.getNodeId() + "!");
-                        break;
+                    totalPeersContacted++;
+                    if (snapshot != null && !snapshot.isEmpty()) {
+                        log("Nhận snapshot " + snapshot.size() + " bản ghi từ " + peer.getNodeId() + ". Đang hợp nhất...");
+                        db.mergeStudents(snapshot);
+                        totalMerged += snapshot.size();
                     }
+                } else {
+                    log("⚠ Không thể kết nối tới Peer: " + peer.getNodeId() + " (" + peer.getHost() + ":" + peer.getPort() + ")");
                 }
             } catch (Exception e) {
                 log("Không thể kéo dữ liệu từ " + peer.getNodeId() + ": " + e.getMessage());
             }
         }
 
-        if (!synced) {
-            log("ℹ Không có Peer Server nào phản hồi hoặc dữ liệu đã đồng bộ.");
+        if (totalPeersContacted > 0) {
+            notifyDataChanged();
+            log("✅ Bắt kịp dữ liệu hoàn tất! (Đã liên hệ " + totalPeersContacted + " peer, hợp nhất " + totalMerged + " bản ghi).");
+        } else {
+            log("ℹ Không có Peer Server nào phản hồi (Hãy kiểm tra lại IP/Port trong khung cấu hình).");
         }
     }
 }
