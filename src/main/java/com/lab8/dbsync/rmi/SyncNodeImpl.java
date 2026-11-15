@@ -76,6 +76,7 @@ public class SyncNodeImpl extends UnicastRemoteObject implements SyncNodeInterfa
             peerCache.put(peer.getNodeId(), stub);
             return stub;
         } catch (Exception e) {
+            System.err.println("[" + nodeId + "] Lỗi lookup peer " + peer + ": " + e.getClass().getName() + " - " + e.getMessage());
             return null;
         }
     }
